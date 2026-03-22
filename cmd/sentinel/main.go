@@ -1,7 +1,12 @@
 package main
 
-import "goSentinel/internal/email"
+import (
+	"goSentinel/internal/collector"
+	//"goSentinel/internal/email"
+)
 
 func main() {
-	email.MainSendPost()
+	//email.MainSendPost()
+	collector.Collector()
+
 }
