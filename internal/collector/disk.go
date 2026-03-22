@@ -6,17 +6,37 @@ import (
 	"github.com/shirou/gopsutil/v4/disk"
 )
 
-func discInfo() {
-	fmt.Println("=======discInfo=======")
-	usage, _ := disk.Usage("/")
+type DiskInfo struct {
+	Total       uint64
+	Used        uint64
+	Free        uint64
+	UsedPercent float64 // процент использованного
+	FreePercent float64 // процент свободного
+	InodesUsed  float64 // процент использованных inodes
+}
 
-	fmt.Printf("Всего: %d GB\n", usage.Total/1024/1024/1024)
-	fmt.Printf("Использовано: %d GB\n", usage.Used/1024/1024/1024)
-	fmt.Printf("Свободно: %d GB\n", usage.Free/1024/1024/1024)
-	fmt.Printf("Использовано: %.2f%%\n", usage.UsedPercent)
-
-	// Дополнительно: inodes (Linux)
-	if usage.InodesTotal > 0 {
-		fmt.Printf("Inodes used: %.2f%%\n", usage.InodesUsedPercent)
+func GetDiskInfo() (DiskInfo, error) {
+	usage, err := disk.Usage("/")
+	if err != nil {
+		return DiskInfo{}, fmt.Errorf("failed to get disck info: %w", err)
 	}
+	const bytesToGB = 1024 * 1024 * 1024
+
+	d := DiskInfo{
+		Total:       usage.Total / bytesToGB,
+		Used:        usage.Used / bytesToGB,
+		Free:        usage.Free / bytesToGB,
+		UsedPercent: usage.UsedPercent,
+		FreePercent: 100.0 - usage.UsedPercent,
+		InodesUsed:  usage.InodesUsedPercent,
+	}
+	fmt.Println(d.String())
+	return d, err
+}
+
+func (d DiskInfo) String() string {
+	return fmt.Sprintf(
+		"Disk: Total=%dGB, Used=%dGB, (%.1f%%) Free=%dGB, (%.1f%%), Inodes=%.1f%%.",
+		d.Total, d.Used, d.UsedPercent, d.Free, d.FreePercent, d.InodesUsed,
+	)
 }

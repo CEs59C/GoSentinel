@@ -1,24 +1,31 @@
 # GoSentinel
 
 ### Todo
- - [ ] сделать описание 
-   - [ ] Ru
-   - [ ] Eng
- - [х] модуль email
- - [ ] модуль collector
-   - [ ] cpu
-   - [ ] memory
-   - [ ] disk
-   - [ ] process
-   - [ ] net
- - [ ] модуль report
-   - [ ] formatter
+- [ ] сделать описание 
+  - [ ] Ru
+  - [ ] Eng
+- [ ] модуль email
+- [ ] модуль collector
+  - [ ] cpu
+  - [ ] memory
+  - [ ] disk
+  - [ ] process
+  - [ ] net
+- [ ] модуль report
+  - [ ] formatter
+  - [ ] Плановый отчет (Daily): 1 раз в сутки (например, в 9:00 утра)
+  - [ ] Триггерный отчет (Alerts): Самое важное. Программа должна собирать данные каждые 5-10 минут, но отправлять письмо ТОЛЬКО ЕСЛИ:
+    - [ ] RAM Used > 90%
+    - [ ] Disk Used > 90%
+    - [ ] Inodes Used > 90%
+    - [ ] Появился новый процесс в netInfo, которого нет в «белом списке».
 
 - [ ] версия для prometheus/grafana?
 
 ```bash
 rm sentine*
 ```
+## silicone 
 
 ```bash
 #arm64 silicone
@@ -30,6 +37,7 @@ path_to_file="/Users/onnikorpella/GolandProjects/goSentinel/sentinelT"
 scp -P 2222 $path_to_file q@127.0.0.1:~/
 ```
 
+## linux
 ```bash
 #amd64 linux
 GOOS=linux GOARCH=amd64 go build -o sentinelVAmd64 ./cmd/sentinel
