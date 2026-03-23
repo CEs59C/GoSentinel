@@ -36,7 +36,7 @@ func GetHostInfo() (HostInfo, error) {
 
 	g := HostInfo{
 		Hostname:             info.Hostname,
-		Uptime:               info.Uptime, // Просто берем секунды
+		Uptime:               info.Uptime, // Просто берем секунды. Переделать наверное сразу на prettyUptime
 		Procs:                info.Procs,
 		OS:                   info.OS,
 		Platform:             info.Platform,
@@ -56,7 +56,7 @@ func (h HostInfo) String() string {
 	prettyUptime := (time.Duration(h.Uptime) * time.Second).String()
 
 	return fmt.Sprintf(
-		"Host: %s [%s %s], Uptime=%s, Processes=%d, Running=%d, Blocked=%d, Created=%d, VM=%s (%s)",
+		"Host:\t\t%s [%s %s], Uptime=%s, Processes=%d, Running=%d, Blocked=%d, Created=%d, VM=%s (%s)",
 		h.Hostname,
 		h.Platform,
 		h.PlatformVersion,

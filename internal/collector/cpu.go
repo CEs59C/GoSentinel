@@ -46,7 +46,7 @@ func GetCPUInfo() (CPUInfo, error) {
 }
 func (c CPUInfo) String() string {
 	return fmt.Sprintf(
-		"CPU Info: Model=%s, Vendor=%s, Cores=%d, Usage=%.2f%%.",
+		"CPU Info:\tModel=%s, Vendor=%s, Cores=%d, Usage=%.2f%%.",
 		c.Model, c.Vendor, c.Cores, c.Usage,
 	)
 }

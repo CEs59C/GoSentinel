@@ -7,21 +7,47 @@ import (
 	"github.com/shirou/gopsutil/v4/process"
 )
 
-func netInfo() {
-	fmt.Println("=======netInfo (Listening Ports)=======")
-	connections, _ := net.Connections("tcp")
+type NetInfo struct {
+	Name string
+	Port uint32
+	Pid  int32
+}
+
+func GetNetInfo() ([]NetInfo, error) {
+	connections, err := net.Connections("tcp")
+	if err != nil {
+		return nil, fmt.Errorf("failed to get TCP connections: %w", err)
+	}
+
+	var listening []NetInfo
 
 	for _, conn := range connections {
-		// Показываем только порты, которые ждут входящих соединений
 		if conn.Status == "LISTEN" {
-			p, err := process.NewProcess(conn.Pid)
-			name := "Unknown"
-			if err == nil {
-				name, _ = p.Name()
+			info := NetInfo{
+				Port: conn.Laddr.Port,
+				Pid:  conn.Pid,
+				Name: "Unknown",
 			}
 
-			fmt.Printf("Процесс: %-12s | Порт: %-5d | PID: %d\n",
-				name, conn.Laddr.Port, conn.Pid)
+			if conn.Pid > 0 {
+				p, err := process.NewProcess(conn.Pid)
+				if err == nil {
+					if name, err := p.Name(); err == nil {
+						info.Name = name
+					}
+				}
+			}
+
+			listening = append(listening, info)
 		}
 	}
+	for _, n := range listening {
+		fmt.Println(n)
+	}
+
+	return listening, nil
+}
+
+func (n NetInfo) String() string {
+	return fmt.Sprintf("Process: %-20s Port: %-5d PID: %d", n.Name, n.Port, n.Pid)
 }

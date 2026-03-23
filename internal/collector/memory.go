@@ -47,9 +47,8 @@ func GetMemoryInfo() (MemoryInfo, error) {
 func (m MemoryInfo) String() string {
 	const mb = 1024 * 1024
 
-	return fmt.Sprintf(
-		"Memory: Total=%dMB, Available=%dMB, Used=%dMB (%.2f%%), Free=%dMB\n"+
-			"Swap:   Total=%dMB, Used=%dMB (%.2f%%), Free=%dMB",
+	return fmt.Sprintf("Memory:\t\tTotal=%dMB, Available=%dMB, Used=%dMB (%.2f%%), Free=%dMB\n"+
+		"Swap:\t\tTotal=%dMB, Used=%dMB (%.2f%%), Free=%dMB",
 		m.Total/mb, m.Available/mb, m.Used/mb, m.UsedPercent, m.Free/mb,
 		m.SwapTotal/mb, m.SwapUsed/mb, m.SwapUsedPercent, m.SwapFree/mb,
 	)

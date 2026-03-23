@@ -36,7 +36,7 @@ func GetDiskInfo() (DiskInfo, error) {
 
 func (d DiskInfo) String() string {
 	return fmt.Sprintf(
-		"Disk: Total=%dGB, Used=%dGB, (%.1f%%) Free=%dGB, (%.1f%%), Inodes=%.1f%%.",
+		"Disk:\t\tTotal=%dGB, Used=%dGB (%.1f%%) Free=%dGB (%.1f%%), Inodes=%.1f%%.",
 		d.Total, d.Used, d.UsedPercent, d.Free, d.FreePercent, d.InodesUsed,
 	)
 }
