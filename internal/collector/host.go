@@ -8,32 +8,64 @@ import (
 	"github.com/shirou/gopsutil/v4/load"
 )
 
-func hostInfo() {
-	fmt.Println("=======hostInfo=======")
-	info, _ := host.Info()
-
-	fmt.Printf("Имя хоста: %s\n", info.Hostname)
-	fmt.Printf("Время работы: %s\n", time.Duration(info.Uptime)*time.Second)
-	fmt.Printf("Количество процессов: %d\n", info.Procs)
-	fmt.Printf("ОС: %s\n", info.OS)
-	fmt.Printf("Платформа: %s\n", info.Platform)
-	fmt.Printf("Семейство: %s\n", info.PlatformFamily)
-	fmt.Printf("Версия: %s\n", info.PlatformVersion)
-	fmt.Printf("Виртуализация: %s (%s)\n", info.VirtualizationSystem, info.VirtualizationRole)
-	foo()
+type HostInfo struct {
+	Hostname             string
+	Uptime               uint64
+	Procs                uint64
+	OS                   string
+	Platform             string
+	PlatformFamily       string
+	PlatformVersion      string
+	VirtualizationSystem string
+	VirtualizationRole   string
+	ProcsRunning         int
+	ProcsBlocked         int
+	ProcsCreated         int
 }
 
-func foo() {
-	avg, _ := load.Avg()
+func GetHostInfo() (HostInfo, error) {
+	info, err := host.Info()
+	if err != nil {
+		return HostInfo{}, fmt.Errorf("failed to get host.Info: %w", err)
+	}
 
-	fmt.Printf("Load Average:\n")
-	fmt.Printf("  1 минута: %.2f\n", avg.Load1)
-	fmt.Printf("  5 минут: %.2f\n", avg.Load5)
-	fmt.Printf("  15 минут: %.2f\n", avg.Load15)
+	misc, err := load.Misc()
+	if err != nil {
+		return HostInfo{}, fmt.Errorf("failed to get load.Misc: %w", err)
+	}
 
-	// Дополнительные метрики (Linux)
-	misc, _ := load.Misc()
-	fmt.Printf("Запущенных процессов: %d\n", misc.ProcsRunning)
-	fmt.Printf("Заблокированных: %d\n", misc.ProcsBlocked)
-	fmt.Printf("Создано процессов: %d\n", misc.ProcsCreated)
+	g := HostInfo{
+		Hostname:             info.Hostname,
+		Uptime:               info.Uptime, // Просто берем секунды
+		Procs:                info.Procs,
+		OS:                   info.OS,
+		Platform:             info.Platform,
+		PlatformFamily:       info.PlatformFamily,
+		PlatformVersion:      info.PlatformVersion,
+		VirtualizationSystem: info.VirtualizationSystem,
+		VirtualizationRole:   info.VirtualizationRole,
+		ProcsRunning:         misc.ProcsRunning,
+		ProcsBlocked:         misc.ProcsBlocked,
+		ProcsCreated:         misc.ProcsCreated,
+	}
+	fmt.Println(g)
+	return g, nil
+}
+
+func (h HostInfo) String() string {
+	prettyUptime := (time.Duration(h.Uptime) * time.Second).String()
+
+	return fmt.Sprintf(
+		"Host: %s [%s %s], Uptime=%s, Processes=%d, Running=%d, Blocked=%d, Created=%d, VM=%s (%s)",
+		h.Hostname,
+		h.Platform,
+		h.PlatformVersion,
+		prettyUptime,
+		h.Procs,
+		h.ProcsRunning,
+		h.ProcsBlocked,
+		h.ProcsCreated,
+		h.VirtualizationSystem,
+		h.VirtualizationRole,
+	)
 }
