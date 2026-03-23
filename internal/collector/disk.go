@@ -30,7 +30,7 @@ func GetDiskInfo() (DiskInfo, error) {
 		FreePercent: 100.0 - usage.UsedPercent,
 		InodesUsed:  usage.InodesUsedPercent,
 	}
-	fmt.Println(d.String())
+
 	return d, err
 }
 

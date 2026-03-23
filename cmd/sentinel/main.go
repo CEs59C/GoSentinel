@@ -1,12 +1,9 @@
 package main
 
-import (
-	"goSentinel/internal/collector"
-	//"goSentinel/internal/email"
-)
+import "goSentinel/internal/report"
 
 func main() {
 	//email.MainSendPost()
-	collector.Collector()
+	report.Report()
 
 }

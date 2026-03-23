@@ -41,9 +41,6 @@ func GetNetInfo() ([]NetInfo, error) {
 			listening = append(listening, info)
 		}
 	}
-	for _, n := range listening {
-		fmt.Println(n)
-	}
 
 	return listening, nil
 }

@@ -41,7 +41,6 @@ func GetCPUInfo() (CPUInfo, error) {
 		c.Cores = int(infos[0].Cores)
 	}
 
-	fmt.Println(c)
 	return c, err
 }
 func (c CPUInfo) String() string {

@@ -40,7 +40,7 @@ func GetMemoryInfo() (MemoryInfo, error) {
 		SwapFree:        s.Free,
 		SwapUsedPercent: s.UsedPercent,
 	}
-	fmt.Println(m)
+
 	return m, nil
 }
 

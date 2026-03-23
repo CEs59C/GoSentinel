@@ -8,11 +8,7 @@ import (
 	"github.com/joho/godotenv"
 )
 
-func MainSendPost() {
-	sendYandexEmail("hello world")
-}
-
-func sendYandexEmail(body string) {
+func SendYandexEmail(body string) {
 	err := godotenv.Load(".env")
 	from := os.Getenv("POST_IN")
 	poTo := os.Getenv("POST_TO")

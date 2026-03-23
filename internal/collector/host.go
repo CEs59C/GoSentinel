@@ -48,7 +48,7 @@ func GetHostInfo() (HostInfo, error) {
 		ProcsBlocked:         misc.ProcsBlocked,
 		ProcsCreated:         misc.ProcsCreated,
 	}
-	fmt.Println(g)
+
 	return g, nil
 }
 
