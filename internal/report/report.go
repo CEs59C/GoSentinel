@@ -4,7 +4,9 @@ import (
 	"fmt"
 	"goSentinel/internal/collector"
 	"goSentinel/internal/email"
+	"log"
 	"strings"
+	"time"
 )
 
 type SystemReport struct {
@@ -25,15 +27,18 @@ func Report() SystemReport {
 	sr.Memory, _ = collector.GetMemoryInfo()
 	sr.Users, _ = collector.GetUserInfo() // []
 	sr.Net, _ = collector.GetNetInfo()    // []
-	fmt.Println(sr)
-	email.SendYandexEmail(sr.String())
+	err := email.SendYandexEmail(sr.String())
+	if err != nil {
+		log.Println(err)
+	}
 	return sr
 }
 
 func (r SystemReport) String() string {
 	var sb strings.Builder
 
-	sb.WriteString("=== System Report ===\n")
+	//sb.WriteString("=== System Report ===\n")
+	sb.WriteString(fmt.Sprintf("Time%s\n", time.Now().Format("2006-01-02 15:04:05")))
 	sb.WriteString(fmt.Sprintf("%s\n", r.CPU))
 	sb.WriteString(fmt.Sprintf("%s\n", r.Disk))
 	sb.WriteString(fmt.Sprintf("%s\n", r.Host))

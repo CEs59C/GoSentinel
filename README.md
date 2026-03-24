@@ -66,7 +66,7 @@ flowchart LR
             SENTINEL["sentinel (бинарник)"]
             ENV_BUILD[".env с зашифрованным паролем<br/>POST_IN=email<br/>POST_TO=recipient<br/>PASSWORD=ENC[AES256_GCM,data:abc123...]"]
         end
-        
+
         STEP1 --> BUILD
     end
 
@@ -96,4 +96,19 @@ flowchart LR
     style TRAP fill:#ffebee,stroke:#b71c1c
     style STEP1 fill:#f5f5f5,stroke:#9e9e9e
     style BUILD fill:#e8f5e9,stroke:#2e7d32
+```
+
+```bash
+make encrypt
+#echo $ENCRYPTION_KEY 
+```
+
+```bash
+make run-remote-amd64
+```
+```bash
+make run-local-arm64
+```
+```bash
+make run-mac
 ```
