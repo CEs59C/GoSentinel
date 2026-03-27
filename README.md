@@ -1,8 +1,74 @@
-# GoSentinel
+# Sentinel
+
+Sentinel — это лёгкий системный мониторинг-сервис на Go с периодическим сбором метрик и отправкой уведомлений по email.
+
+## Возможности
+
+* Сбор системных метрик (CPU, память и др.)
+* Периодический мониторинг (раз в минуту)(В РАЗРАБОТКЕ)
+* Алерты при превышении порогов(В РАЗРАБОТКЕ)
+* Ежедневный отчёт (например, в 09:00 по Москве)(В РАЗРАБОТКЕ)
+* Отправка уведомлений через SMTP (Yandex)
+* Поддержка двух режимов конфигурации:
+    * `.env` — для разработки
+    * `.env.encrypted` — для production
+
+## Конфигурация
+
+Приложение автоматически определяет режим:
+* если найден `.env.encrypted` → используется расшифровка (через `ENCRYPTION_KEY`)
+* если найден `.env` → используется plain режим
+
+Переменные окружения:
+* `POST_IN` — отправитель
+* `POST_TO` — получатель
+* `PASSWORD` — пароль (plain или зашифрованный)
+
+## Запуск
+
+### Локально(для мак)
+
+```bash
+make run-local
+```
+
+### Удалённо
+
+```bash
+make run GOOS=linux GOARCH=amd64 HOST=remote
+```
+
+Makefile автоматически:
+
+* собирает бинарь под нужную платформу
+* деплоит на сервер
+* прокидывает `ENCRYPTION_KEY` (если есть)
+
+## Шифрование
+
+```bash
+make encrypt
+```
+
+Создаёт:
+* `.env.encrypted`
+* `.env.key`
+
+Ключ используется через переменную окружения `ENCRYPTION_KEY`.
+
+## Архитектура
+
+* Go (stdlib)
+* SMTP (net/smtp)
+* конфигурация через env
+* Makefile как точка входа для сборки и деплоя
+
+---
+
 
 ### Todo
-- [ ] сделать описание 
-  - [ ] Ru
+- [x] сделать описание 
+  - [x] Ru
   - [ ] Eng
 - [x] модуль email
 - [x] модуль collector
@@ -19,7 +85,7 @@
     - [ ] Disk Used > 90%
     - [ ] Inodes Used > 90%
     - [ ] Появился новый процесс в netInfo, которого нет в «белом списке».
-- [ ] наладить работу с .env
+- [x] наладить работу с .env
 - [x] сделать Make файл
 - [ ] версия для prometheus?
   - [ ] тогда надо делать вэб-сервис с постоянной трансяцией данных на http://ip:9100/metrics
@@ -47,68 +113,7 @@ Process: systemd              Port: 22    PID: 1
 Письмо успешно отправлено!
 ```
 
-## Схема работы с .env
-```mermaid
-flowchart LR
-    subgraph COMPILE[ПРОЦЕСС КОМПИЛЯЦИИ]
-        direction TB
-        ENV[".env (исходный)"]
-        
-        subgraph  STEP1[Шифруем ТОЛЬКО пароли]
-            POST_IN1["POST_IN=email<br/>(не тронуто)"]
-            POST_TO1["POST_TO=recipient<br/>(не тронуто)"]
-            PASSWORD1["PASSWORD=real123<br/>(зашифровано)"]
-        end
-        
-        ENV --> STEP1
-        
-        subgraph BUILD[build/ структура]
-            SENTINEL["sentinel (бинарник)"]
-            ENV_BUILD[".env с зашифрованным паролем<br/>POST_IN=email<br/>POST_TO=recipient<br/>PASSWORD=ENC[AES256_GCM,data:abc123...]"]
-        end
-
-        STEP1 --> BUILD
-    end
-
-    subgraph RUNTIME[РАБОТА ПРИЛОЖЕНИЯ НА СЕРВЕРЕ]
-        direction TB
-        READ[1. Бинарник читает .env файл]
-        DETECT[2. Обнаруживает зашифрованный пароль]
-        DECRYPT[3. Пытается расшифровать с встроенным ключом]
-        MEMORY[4. Получает реальный пароль в памяти]
-        
-        READ --> DETECT --> DECRYPT --> MEMORY
-    end
-
-    subgraph  TRAP[ЛОВУШКА ДЛЯ ЗЛОУМЫШЛЕННИКА]
-        direction RL
-        THEFT1["Украл бинарник → нет .env, нет пароля"]
-        THEFT2["Украл .env → пароль зашифрован, не может расшифровать"]
-        THEFT3["Сделал strings на бинарник → видит ложные пароли (ловушка)"]
-        THEFT4["Запускает с подменой .env → использует подставные данные"]
-    end
-
-    COMPILE --> RUNTIME
-    COMPILE -.-> TRAP
-
-    style COMPILE fill:#e1f5fe,stroke:#01579b
-    style RUNTIME fill:#fff3e0,stroke:#e65100
-    style TRAP fill:#ffebee,stroke:#b71c1c
-    style STEP1 fill:#f5f5f5,stroke:#9e9e9e
-    style BUILD fill:#e8f5e9,stroke:#2e7d32
-```
-
 ```bash
 make encrypt
 #echo $ENCRYPTION_KEY 
-```
-
-```bash
-make run-remote-amd64
-```
-```bash
-make run-local-arm64
-```
-```bash
-make run-mac
 ```

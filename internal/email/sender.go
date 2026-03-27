@@ -8,15 +8,23 @@ import (
 	"log"
 	"net/smtp"
 	"os"
-	"strings"
 	"time"
 
 	"github.com/joho/godotenv"
 )
 
+type EnvMode int
+
+const (
+	EnvUnknown EnvMode = iota
+	EnvPlain
+	EnvEncrypted
+)
+
 func SendYandexEmail(body string) error {
 	// 1. Загружаем .env (ищем в нескольких местах)
-	if err := loadEnvFile(); err != nil {
+	mode, err := loadEnvFile()
+	if err != nil {
 		return fmt.Errorf("не удалось загрузить .env: %w", err)
 	}
 
@@ -28,9 +36,19 @@ func SendYandexEmail(body string) error {
 		return fmt.Errorf("POST_IN, POST_TO или PASSWORD не установлены")
 	}
 
-	password, err := decryptPassword(encryptedPassword)
-	if err != nil {
-		return fmt.Errorf("не удалось расшифровать пароль: %w", err)
+	var password string
+
+	switch mode {
+	case EnvEncrypted:
+		password, err = decryptPassword(encryptedPassword)
+		if err != nil {
+			return fmt.Errorf("не удалось расшифровать пароль: %w", err)
+		}
+	case EnvPlain:
+		password = encryptedPassword
+		log.Println("Использован не шифрованный пароль")
+	default:
+		log.Println("[CONFIG] Using plain password (no encryption)")
 	}
 
 	log.Printf("[%s] Отправка email от %s к %s\n",
@@ -49,16 +67,13 @@ func SendYandexEmail(body string) error {
 	auth := smtp.PlainAuth("", from, password, smtpHost)
 	err = smtp.SendMail(smtpHost+":"+smtpPort, auth, from, to1, message)
 	if err != nil {
-		return fmt.Errorf("Ошибка отправки:", err)
+		return fmt.Errorf("Ошибка отправки:  %w", err)
 	}
 	log.Println("Письмо успешно отправлено!")
 	return nil
 }
 
 func decryptPassword(encrypted string) (string, error) {
-	if !strings.HasPrefix(encrypted, "ENC:") {
-		return encrypted, nil
-	}
 	encrypted = encrypted[4:]
 	keyB64 := os.Getenv("ENCRYPTION_KEY")
 	if keyB64 == "" {
@@ -104,19 +119,27 @@ func decryptPassword(encrypted string) (string, error) {
 	return string(plaintext), nil
 }
 
-func loadEnvFile() error {
-	paths := []string{
-		"build/.env.encrypted", // зашифрованный вариант
-		".env.encrypted",       // зашифрованный вариант
-		".env",                 // текущая директория
-		"/etc/sentinel/.env",   // системная директория
-		os.Getenv("HOME") + "/.config/sentinel/.env",
+func loadEnvFile() (EnvMode, error) {
+	paths := []struct {
+		path string
+		mode EnvMode
+	}{
+		{"build/.env.encrypted", EnvEncrypted}, // зашифрованный вариант
+		{".env.encrypted", EnvEncrypted},       // зашифрованный вариант
+		{".env", EnvPlain},                     // текущая директория
+		{"/etc/sentinel/.env", EnvPlain},       // системная директория
+		{os.Getenv("HOME") + "/.config/sentinel/.env", EnvPlain},
 	}
-	for _, path := range paths {
-		if err := godotenv.Load(path); err == nil {
-			log.Println("Загружен файл:", path)
-			return nil
+	for _, p := range paths {
+		if err := godotenv.Load(p.path); err == nil {
+			switch p.mode {
+			case EnvEncrypted:
+				log.Println("Загружен шифрованный файл:", p)
+			case EnvPlain:
+				log.Println("Загружен нешифрованный файл:", p)
+			}
+			return p.mode, nil
 		}
 	}
-	return fmt.Errorf(".env файл не найден")
+	return EnvUnknown, fmt.Errorf(".env файл не найден")
 }

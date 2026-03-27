@@ -8,13 +8,13 @@ ENV_FILE = .env.encrypted
 KEY_FILE := .env.key
 ENCRYPTION_KEY := $(shell cat $(BUILD_DIR)/$(KEY_FILE) 2>/dev/null)
 
-GOOS ?= linux
-GOARCH ?= amd64
-HOST ?= remote
+#GOOS ?= linux
+#GOARCH ?= amd64
+#HOST ?= remote
 
-#GOOS ?= darwin
-#GOARCH ?= arm64
-#HOST ?= local
+GOOS ?= darwin
+GOARCH ?= arm64
+HOST ?= local
 
 #GOOS ?= linux
 #GOARCH ?= arm64
@@ -42,7 +42,7 @@ clean:
 
 encrypt:
 	@echo "[Make] Шифрование .env..."
-	go run tools/encrypt.go | tee /tmp/encrypt_output.txt
+	go run tools/encrypt.go
 
 build:
 	@echo "[Make] Building for $(GOOS)/$(GOARCH)..."
@@ -53,17 +53,16 @@ clean-remote:
 	@echo "[Make] Cleaning to $(HOST)..."
 	ssh $(HOST_USER)@$(HOST_ADDR) -p $(HOST_PORT) "rm -f ~/$(BINARY_NAME)*"
 	ssh $(HOST_USER)@$(HOST_ADDR) -p $(HOST_PORT) "rm -f ~/$(ENV_FILE)"
-	#"rm -f $(BINARY_NAME)-*"
-
-deploy: clean-remote build scp-env  #
-	@echo "[Make] Deploying to $(HOST)..."
-	scp -P $(HOST_PORT) $(BINARY) \
-	$(HOST_USER)@$(HOST_ADDR):$(HOST_PATH)/$(REMOTE_BINARY)
 
 scp-env:
 	@echo "[Make] Uploading env file..."
 	scp -P $(HOST_PORT) $(BUILD_DIR)/$(ENV_FILE) \
 	$(HOST_USER)@$(HOST_ADDR):$(HOST_PATH)
+
+deploy: clean-remote build scp-env
+	@echo "[Make] Deploying to $(HOST)..."
+	scp -P $(HOST_PORT) $(BINARY) \
+	$(HOST_USER)@$(HOST_ADDR):$(HOST_PATH)/$(REMOTE_BINARY)
 
 run: deploy
 	@echo "[Make] Running on $(HOST)..."
@@ -73,12 +72,13 @@ run: deploy
 run-local: build
 	@echo "[Make] Local run for $(GOOS)/$(GOARCH)..."
 	@if [ -f $(BUILD_DIR)/$(KEY_FILE) ]; then \
-		echo "[Make] Ключ загружен"; \
+		echo "[Make] Ключ найден, запускаем с шифрованием"; \
+		ENCRYPTION_KEY="$(ENCRYPTION_KEY)" $(BINARY); \
 	else \
-		echo "[Make] Ключ не найден, пропускаем"; \
-		exit 1; \
+		echo "[Make] Ключ не найден, работаем с нешифрованным .env"; \
+		$(BINARY); \
 	fi
-	ENCRYPTION_KEY=$(ENCRYPTION_KEY) $(BINARY)
+
 
 run-remote-amd64:
 	$(MAKE) run GOOS=linux GOARCH=amd64 HOST=remote
