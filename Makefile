@@ -79,7 +79,6 @@ run-local: build
 		$(BINARY); \
 	fi
 
-
 run-remote-amd64:
 	$(MAKE) run GOOS=linux GOARCH=amd64 HOST=remote
 
@@ -88,3 +87,10 @@ run-local-arm64:
 
 run-mac:
 	$(MAKE) run-local GOOS=darwin GOARCH=arm64 HOST=local
+
+install:
+	@curl -sfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s -- -b $(GOPATH)/bin
+lint:
+	@golangci-lint run ./... -v
+lint_autofix:
+	@G0111MODULE=on $(GOLINT) run ./... -v --fix

@@ -6,6 +6,7 @@ import (
 	"goSentinel/internal/email"
 	"log"
 	"strings"
+	"sync"
 	"time"
 )
 
@@ -21,12 +22,49 @@ type SystemReport struct {
 
 func Report() SystemReport {
 	sr := SystemReport{}
-	sr.CPU, _ = collector.GetCPUInfo() // wait 1 sec
-	sr.Disk, _ = collector.GetDiskInfo()
-	sr.Host, _ = collector.GetHostInfo()
-	sr.Memory, _ = collector.GetMemoryInfo()
-	sr.Users, _ = collector.GetUserInfo() // []
-	sr.Net, _ = collector.GetNetInfo()    // []
+
+	var wg sync.WaitGroup
+	wg.Add(1)
+	go func() {
+		defer wg.Done()
+
+		if cpu, err := collector.GetCPUInfo(); err != nil { // wait 1 sec
+			sr.Errors["cpu"] = err
+		} else {
+			sr.CPU = cpu
+		}
+	}()
+
+	if disk, err := collector.GetDiskInfo(); err != nil {
+		sr.Errors["disk"] = err
+	} else {
+		sr.Disk = disk
+	}
+
+	if host, err := collector.GetHostInfo(); err != nil {
+		sr.Errors["host"] = err
+	} else {
+		sr.Host = host
+	}
+
+	if memory, err := collector.GetMemoryInfo(); err != nil {
+		sr.Errors["memory"] = err
+	} else {
+		sr.Memory = memory
+	}
+
+	if user, err := collector.GetUserInfo(); err != nil {
+		sr.Errors["user"] = err
+	} else {
+		sr.Users = user
+	}
+
+	if net, err := collector.GetNetInfo(); err != nil {
+		sr.Errors["net"] = err
+	} else {
+		sr.Net = net
+	}
+
 	err := email.SendYandexEmail(sr.String())
 	if err != nil {
 		log.Println(err)
@@ -38,22 +76,22 @@ func (r SystemReport) String() string {
 	var sb strings.Builder
 
 	//sb.WriteString("=== System Report ===\n")
-	sb.WriteString(fmt.Sprintf("Time%s\n", time.Now().Format("2006-01-02 15:04:05")))
-	sb.WriteString(fmt.Sprintf("%s\n", r.CPU))
-	sb.WriteString(fmt.Sprintf("%s\n", r.Disk))
-	sb.WriteString(fmt.Sprintf("%s\n", r.Host))
-	sb.WriteString(fmt.Sprintf("%s\n", r.Memory))
+	fmt.Fprintf(&sb, "Time%s\n", time.Now().Format("2006-01-02 15:04:05"))
+	fmt.Fprintf(&sb, "%s\n", r.CPU)
+	fmt.Fprintf(&sb, "%s\n", r.Disk)
+	fmt.Fprintf(&sb, "%s\n", r.Host)
+	fmt.Fprintf(&sb, "%s\n", r.Memory)
 	for _, u := range r.Users {
-		sb.WriteString(fmt.Sprintf("%s\n", u))
+		fmt.Fprintf(&sb, "%s\n", u)
 	}
 	for _, n := range r.Net {
-		sb.WriteString(fmt.Sprintf("%s\n", n))
+		fmt.Fprintf(&sb, "%s\n", n)
 	}
 
 	if len(r.Errors) > 0 {
 		sb.WriteString("\nErrors:\n")
 		for key, err := range r.Errors {
-			sb.WriteString(fmt.Sprintf("  %s: %v\n", key, err))
+			fmt.Fprintf(&sb, "  %s: %v\n", key, err)
 		}
 	}
 

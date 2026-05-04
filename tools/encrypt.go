@@ -28,7 +28,7 @@ func main() {
 		os.Exit(1)
 	}
 
-	var encrypted string = ""
+	var encrypted string
 	lines := strings.Split(string(dataEnv), "\n")
 	for i, line := range lines {
 		if strings.HasPrefix(line, "PASSWORD") {

@@ -67,7 +67,7 @@ func SendYandexEmail(body string) error {
 	auth := smtp.PlainAuth("", from, password, smtpHost)
 	err = smtp.SendMail(smtpHost+":"+smtpPort, auth, from, to1, message)
 	if err != nil {
-		return fmt.Errorf("Ошибка отправки:  %w", err)
+		return fmt.Errorf("ошибка отправки:  %w", err)
 	}
 	log.Println("Письмо успешно отправлено!")
 	return nil
