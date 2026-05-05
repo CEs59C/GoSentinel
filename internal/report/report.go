@@ -3,10 +3,8 @@ package report
 import (
 	"fmt"
 	"goSentinel/internal/collector"
-	"goSentinel/internal/email"
 	"log"
 	"strings"
-	"sync"
 	"time"
 )
 
@@ -20,20 +18,17 @@ type SystemReport struct {
 	Errors map[string]error
 }
 
-func Report() SystemReport {
-	sr := SystemReport{}
+func Collect() SystemReport {
+	log.Println("[INFO] Запуск сбора метрик систем ")
+	sr := SystemReport{
+		Errors: make(map[string]error),
+	}
 
-	var wg sync.WaitGroup
-	wg.Add(1)
-	go func() {
-		defer wg.Done()
-
-		if cpu, err := collector.GetCPUInfo(); err != nil { // wait 1 sec
-			sr.Errors["cpu"] = err
-		} else {
-			sr.CPU = cpu
-		}
-	}()
+	if cpu, err := collector.GetCPUInfo(); err != nil { // wait 1 sec
+		sr.Errors["cpu"] = err
+	} else {
+		sr.CPU = cpu
+	}
 
 	if disk, err := collector.GetDiskInfo(); err != nil {
 		sr.Errors["disk"] = err
@@ -65,25 +60,24 @@ func Report() SystemReport {
 		sr.Net = net
 	}
 
-	err := email.SendYandexEmail(sr.String())
-	if err != nil {
-		log.Println(err)
-	}
+	log.Println("[INFO] Конец сбора метрик системы")
+
 	return sr
 }
 
 func (r SystemReport) String() string {
 	var sb strings.Builder
 
-	//sb.WriteString("=== System Report ===\n")
-	fmt.Fprintf(&sb, "Time%s\n", time.Now().Format("2006-01-02 15:04:05"))
+	fmt.Fprintf(&sb, "Time: %s\n", time.Now().Format("2006-01-02 15:04:05"))
 	fmt.Fprintf(&sb, "%s\n", r.CPU)
 	fmt.Fprintf(&sb, "%s\n", r.Disk)
 	fmt.Fprintf(&sb, "%s\n", r.Host)
 	fmt.Fprintf(&sb, "%s\n", r.Memory)
+
 	for _, u := range r.Users {
 		fmt.Fprintf(&sb, "%s\n", u)
 	}
+
 	for _, n := range r.Net {
 		fmt.Fprintf(&sb, "%s\n", n)
 	}

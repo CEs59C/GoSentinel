@@ -1,9 +1,18 @@
 package main
 
-import "goSentinel/internal/report"
+import (
+	"goSentinel/internal/config"
+	"log"
+)
 
 func main() {
-	//email.MainSendPost()
-	report.Report()
+	cfg, err := config.Load()
+	if err != nil {
+		log.Fatal("[ERROR] проблемы при парсинге файлов:", err)
+	}
 
+	app := New(cfg)
+	if err := app.Run(); err != nil {
+		log.Fatal(err)
+	}
 }

@@ -35,14 +35,16 @@ func GetCPUInfo() (CPUInfo, error) {
 	if len(usage) > 0 {
 		c.Usage = usage[0]
 	}
+
 	if len(infos) > 0 {
 		c.Model = infos[0].ModelName
 		c.Vendor = infos[0].VendorID
 		c.Cores = int(infos[0].Cores)
 	}
 
-	return c, err
+	return c, nil
 }
+
 func (c CPUInfo) String() string {
 	return fmt.Sprintf(
 		"CPU Info:\tModel=%s, Vendor=%s, Cores=%d, Usage=%.2f%%.",

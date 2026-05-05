@@ -31,7 +31,7 @@ func GetDiskInfo() (DiskInfo, error) {
 		InodesUsed:  usage.InodesUsedPercent,
 	}
 
-	return d, err
+	return d, nil
 }
 
 func (d DiskInfo) String() string {
