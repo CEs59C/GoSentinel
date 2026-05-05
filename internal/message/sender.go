@@ -8,24 +8,43 @@ import (
 	"time"
 )
 
-func SendYandexEmail(conf *config.Conf, body string) error {
+func SendYandexEmail(cfg *config.Conf, body string) error {
 	log.Printf("[INFO] [%s] Отправка сообщения от %s к %s\n",
-		time.Now().Format("15:04:05"), conf.From, conf.To)
+		time.Now().Format("15:04:05"), cfg.From, cfg.To)
 
-	conf.SmtpHost = "smtp.yandex.ru"
-	conf.SmtpPort = "587" // Можно также 465 для SSL
-	auth := smtp.PlainAuth("", conf.From, conf.Password, conf.SmtpHost)
+	auth := smtp.PlainAuth("", cfg.From, cfg.Password, cfg.SmtpHost)
 
 	message := []byte("Subject: System Monitor Report\r\n" +
-		"To: " + conf.To + "\r\n" +
+		"To: " + cfg.To + "\r\n" +
 		"Content-Type: text/plain; charset=UTF-8\r\n" +
 		"\r\n" +
 		body)
+
+	err := smtp.SendMail(cfg.SmtpHost+":"+cfg.SmtpPort, auth, cfg.From, []string{cfg.To}, message)
+	if err != nil {
+		return fmt.Errorf("Ошибка отправки:  %w", err)
+	}
+	log.Println("[INFO] Письмо успешно отправлено!")
+	return nil
+}
+
+func SendYandexEmailHTMLView(conf *config.Conf, body string) error {
+	log.Printf("[INFO] Отправка сообщения c HTML")
+
+	auth := smtp.PlainAuth("", conf.From, conf.Password, conf.SmtpHost)
+
+	message := []byte(
+		"Subject: System Monitor Report\r\n" +
+			"MIME-Version: 1.0\r\n" +
+			"Content-Type: text/html; charset=UTF-8\r\n" +
+			"\r\n" +
+			body,
+	)
 
 	err := smtp.SendMail(conf.SmtpHost+":"+conf.SmtpPort, auth, conf.From, []string{conf.To}, message)
 	if err != nil {
 		return fmt.Errorf("Ошибка отправки:  %w", err)
 	}
-	log.Println("[INFO] Письмо успешно отправлено!")
+
 	return nil
 }

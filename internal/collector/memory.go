@@ -20,6 +20,7 @@ type MemoryInfo struct {
 }
 
 func GetMemoryInfo() (MemoryInfo, error) {
+	const mb = 1024 * 1024
 	v, err := mem.VirtualMemory()
 	if err != nil {
 		return MemoryInfo{}, fmt.Errorf("failed to get virtual memory: %w", err)
@@ -29,15 +30,16 @@ func GetMemoryInfo() (MemoryInfo, error) {
 	if err != nil {
 		return MemoryInfo{}, fmt.Errorf("failed to get swap memory: %w", err)
 	}
+
 	m := MemoryInfo{
-		Total:           v.Total,
-		Available:       v.Available,
-		Used:            v.Used,
-		Free:            v.Free,
+		Total:           v.Total / mb,
+		Available:       v.Available / mb,
+		Used:            v.Used / mb,
+		Free:            v.Free / mb,
 		UsedPercent:     v.UsedPercent,
-		SwapTotal:       s.Total,
-		SwapUsed:        s.Used,
-		SwapFree:        s.Free,
+		SwapTotal:       s.Total / mb,
+		SwapUsed:        s.Used / mb,
+		SwapFree:        s.Free / mb,
 		SwapUsedPercent: s.UsedPercent,
 	}
 
@@ -49,7 +51,7 @@ func (m MemoryInfo) String() string {
 
 	return fmt.Sprintf("Memory:\t\tTotal=%dMB, Available=%dMB, Used=%dMB (%.2f%%), Free=%dMB\n"+
 		"Swap:\t\tTotal=%dMB, Used=%dMB (%.2f%%), Free=%dMB",
-		m.Total/mb, m.Available/mb, m.Used/mb, m.UsedPercent, m.Free/mb,
-		m.SwapTotal/mb, m.SwapUsed/mb, m.SwapUsedPercent, m.SwapFree/mb,
+		m.Total, m.Available, m.Used, m.UsedPercent, m.Free,
+		m.SwapTotal, m.SwapUsed, m.SwapUsedPercent, m.SwapFree,
 	)
 }

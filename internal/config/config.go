@@ -13,14 +13,19 @@ import (
 )
 
 type Conf struct {
-	From              string
-	To                string
-	Password          string
 	EncryptedPassword bool
-	PathEnv           string
-	SmtpHost          string
-	SmtpPort          string
 	IsSendMail        bool
+	IsHTMLView        bool
+	EnableHTTPPreview bool
+
+	PathEnv  string
+	Password string
+
+	From string
+	To   string
+
+	SmtpHost string
+	SmtpPort string
 }
 
 func ParseEnv() (*Conf, error) {
@@ -33,11 +38,19 @@ func ParseEnv() (*Conf, error) {
 	cfg.To = os.Getenv("POST_TO")
 	cfg.Password = os.Getenv("PASSWORD")
 
+	// опция отправки на почту или печати в терминал
+	// true - почта, false - печать в терминал
+	cfg.IsSendMail = true
+
+	// опция отправки в виде HTML либо тексом
+	// true - HTML, false - текст
+	cfg.IsHTMLView = true
+	cfg.SmtpHost = "smtp.yandex.ru"
+	cfg.SmtpPort = "587" // Можно также 465 для SSL
+
 	if cfg.From == "" || cfg.To == "" || cfg.Password == "" {
 		return cfg, fmt.Errorf("POST_IN, POST_TO или PASSWORD не установлены")
 	}
-
-	//var password string
 
 	switch cfg.EncryptedPassword {
 	case true:
