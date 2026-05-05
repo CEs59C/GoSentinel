@@ -8,7 +8,7 @@ import (
 	"time"
 )
 
-func SendYandexEmail(cfg *config.Conf, body string) error {
+func SendYandexEmail(cfg *config.Config, body string) error {
 	log.Printf("[INFO] [%s] Отправка сообщения от %s к %s\n",
 		time.Now().Format("15:04:05"), cfg.From, cfg.To)
 
@@ -28,7 +28,7 @@ func SendYandexEmail(cfg *config.Conf, body string) error {
 	return nil
 }
 
-func SendYandexEmailHTMLView(conf *config.Conf, body string) error {
+func SendYandexEmailHTMLView(conf *config.Config, body string) error {
 	log.Printf("[INFO] Отправка сообщения c HTML")
 
 	auth := smtp.PlainAuth("", conf.From, conf.Password, conf.SmtpHost)

@@ -12,24 +12,27 @@ import (
 	"github.com/joho/godotenv"
 )
 
-type Conf struct {
+type Config struct {
 	EncryptedPassword bool
-	IsSendMail        bool
-	IsHTMLView        bool
-	EnableHTTPPreview bool
-
-	PathEnv  string
-	Password string
-
-	From string
-	To   string
-
-	SmtpHost string
-	SmtpPort string
+	Mode              Mode
+	PathEnv           string
+	Password          string
+	From              string
+	To                string
+	SmtpHost          string
+	SmtpPort          string
 }
+type Mode string
 
-func ParseEnv() (*Conf, error) {
-	cfg, err := loadEnvFile()
+const (
+	ModeConsole   Mode = "console"
+	ModeEmailText Mode = "email-text"
+	ModeEmailHTML Mode = "email-html"
+	ModeTest      Mode = "test"
+)
+
+func Load() (*Config, error) {
+	cfg, err := searchAndLoadEnvFile()
 	if err != nil {
 		return cfg, fmt.Errorf("не удалось загрузить .env: %w", err)
 	}
@@ -37,26 +40,20 @@ func ParseEnv() (*Conf, error) {
 	cfg.From = os.Getenv("POST_IN")
 	cfg.To = os.Getenv("POST_TO")
 	cfg.Password = os.Getenv("PASSWORD")
+	cfg.Mode = Mode(os.Getenv("MODE"))
+	cfg.SmtpHost = os.Getenv("SMTP_HOST")
+	cfg.SmtpPort = os.Getenv("SMTP_PORT")
 
-	// опция отправки на почту или печати в терминал
-	// true - почта, false - печать в терминал
-	cfg.IsSendMail = true
-
-	// опция отправки в виде HTML либо тексом
-	// true - HTML, false - текст
-	cfg.IsHTMLView = true
-	cfg.SmtpHost = "smtp.yandex.ru"
-	cfg.SmtpPort = "587" // Можно также 465 для SSL
-
-	if cfg.From == "" || cfg.To == "" || cfg.Password == "" {
-		return cfg, fmt.Errorf("POST_IN, POST_TO или PASSWORD не установлены")
+	err = cfg.validate()
+	if err != nil {
+		return nil, fmt.Errorf("[ERROR] отсутствуют обязательные данные в .ENV: %w", err)
 	}
 
 	switch cfg.EncryptedPassword {
 	case true:
 		cfg.Password, err = decryptPassword(cfg.Password)
 		if err != nil {
-			return &Conf{}, fmt.Errorf("не удалось расшифровать пароль: %w", err)
+			return &Config{}, fmt.Errorf("не удалось расшифровать пароль: %w", err)
 		}
 	case false:
 		log.Println("[INFO] Использован не шифрованный пароль")
@@ -67,14 +64,29 @@ func ParseEnv() (*Conf, error) {
 	return cfg, nil
 }
 
-func loadEnvFile() (*Conf, error) {
+func (c *Config) validate() error {
+	if c.From == "" || c.To == "" {
+		return fmt.Errorf("email not configured")
+	}
+
+	switch c.Mode {
+	case ModeConsole, ModeEmailText, ModeEmailHTML, ModeTest:
+		return nil
+	default:
+		return fmt.Errorf("invalid MODE: %s", c.Mode)
+	}
+
+	return nil
+}
+
+func searchAndLoadEnvFile() (*Config, error) {
 	log.Println("[INFO] Начат поиск файла .env")
-	cfg := &Conf{}
+	cfg := &Config{}
 
 	home, err := os.UserHomeDir()
 	if err != nil {
 		log.Println("[ERROR] Домашняя директория не определена")
-		return nil, fmt.Errorf("Домашняя директория не определена")
+		return nil, fmt.Errorf("домашняя директория не определена %w", err)
 	}
 
 	paths := []struct {
