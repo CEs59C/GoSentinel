@@ -56,9 +56,9 @@ func Load() (*Config, error) {
 			return &Config{}, fmt.Errorf("не удалось расшифровать пароль: %w", err)
 		}
 	case false:
-		log.Println("[INFO] Использован не шифрованный пароль")
+		log.Println("[INFO] использован не шифрованный пароль")
 	default:
-		log.Println("[CONFIG] Using plain password (no encryption)")
+		log.Println("[CONFIG] Использование простого пароля (no encryption)")
 	}
 
 	return cfg, nil
@@ -78,12 +78,12 @@ func (c *Config) validate() error {
 }
 
 func searchAndLoadEnvFile() (*Config, error) {
-	log.Println("[INFO] Начат поиск файла .env")
+	log.Println("[INFO] начат поиск файла .env")
 	cfg := &Config{}
 
 	home, err := os.UserHomeDir()
 	if err != nil {
-		log.Println("[ERROR] Домашняя директория не определена")
+		log.Println("[ERROR] домашняя директория не определена")
 		return nil, fmt.Errorf("домашняя директория не определена %w", err)
 	}
 
@@ -102,12 +102,12 @@ func searchAndLoadEnvFile() (*Config, error) {
 		if err := godotenv.Load(p.path); err == nil {
 
 			if p.isEncrypted {
-				log.Println("[INFO] Найден шифрованный файл: ", p.path)
+				log.Println("[INFO] найден шифрованный файл: ", p.path)
 				cfg.EncryptedPassword = true
 				cfg.PathEnv = p.path
 				break
 			} else {
-				log.Println("[INFO] Найден нешифрованный файл:", p.path)
+				log.Println("[INFO] найден нешифрованный файл:", p.path)
 				cfg.EncryptedPassword = false
 				cfg.PathEnv = p.path
 				break
@@ -123,7 +123,7 @@ func searchAndLoadEnvFile() (*Config, error) {
 }
 
 func decryptPassword(encrypted string) (string, error) {
-	log.Println("[INFO] Начата расшифровка шифрованного пароля")
+	log.Println("[INFO] начата расшифровка шифрованного пароля")
 
 	if !strings.HasPrefix(encrypted, "ENC:") {
 		return "", fmt.Errorf("invalid encrypted format")
@@ -138,11 +138,11 @@ func decryptPassword(encrypted string) (string, error) {
 			   export ENCRYPTION_KEY='Ключ расшифровки'
 			============================================================
 			`
-		log.Println("[WARNING] Ключ расшифровки пароля не найден в переменных окружения")
+		log.Println("[WARNING] ключ расшифровки пароля не найден в переменных окружения")
 		log.Println(template)
 		return "", fmt.Errorf("ENCRYPTION_KEY не установлен")
 	} else {
-		log.Println("[INFO] Ключ найден")
+		log.Println("[INFO] ключ найден")
 	}
 
 	// Декодируем ключ

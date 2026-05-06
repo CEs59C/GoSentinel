@@ -16,16 +16,16 @@ func main() {
 	// генерация ключа
 	key := make([]byte, 32)
 	if _, err := io.ReadFull(rand.Reader, key); err != nil {
-		log.Fatal("[ERROR] Ошибка сохранения в ./build/.env.key: %w\n", err)
+		log.Fatal("[ERROR] ошибка сохранения в ./build/.env.key: %w\n", err)
 	}
 	keyB64 := base64.StdEncoding.EncodeToString(key)
 	if err := os.WriteFile("./build/.env.key", []byte(keyB64), 0600); err != nil {
-		log.Fatal("[ERROR] Ошибка сохранения в ./build/.env.key: %w\n", err)
+		log.Fatal("[ERROR] ошибка сохранения в ./build/.env.key: %w\n", err)
 	}
 
 	dataEnv, err := os.ReadFile(file)
 	if err != nil {
-		log.Printf("[ERROR] Ошибка: .env файл не найден\n")
+		log.Printf("[ERROR] ошибка: .env файл не найден\n")
 		os.Exit(1)
 	}
 
@@ -39,7 +39,7 @@ func main() {
 			if len(parts) == 2 {
 				encrypted, _ = encryptPassword(parts[1], key)
 				lines[i] = "PASSWORD=" + encrypted
-				log.Printf("[INFO] Пароль зашифрован\n")
+				log.Printf("[INFO] пароль зашифрован\n")
 			} else {
 				log.Println("[ERROR] что-то с паролем в файле", file)
 			}
@@ -48,7 +48,7 @@ func main() {
 
 	result := strings.Join(lines, "\n")
 	if err := os.WriteFile("./build/.env.encrypted", []byte(result), 0600); err != nil {
-		log.Printf("[ERROR] Ошибка сохранения в ./build/.env.encrypted: %v\n", err)
+		log.Printf("[ERROR] ошибка сохранения в ./build/.env.encrypted: %v\n", err)
 		os.Exit(1)
 	}
 

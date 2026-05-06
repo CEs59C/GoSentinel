@@ -19,7 +19,7 @@ type SystemReport struct {
 }
 
 func Collect() SystemReport {
-	log.Println("[INFO] Запуск сбора метрик систем ")
+	log.Println("[INFO] запуск сбора метрик систем ")
 	sr := SystemReport{
 		Errors: make(map[string]error),
 	}
@@ -60,7 +60,7 @@ func Collect() SystemReport {
 		sr.Net = net
 	}
 
-	log.Println("[INFO] Конец сбора метрик системы")
+	log.Println("[INFO] конец сбора метрик системы")
 
 	return sr
 }

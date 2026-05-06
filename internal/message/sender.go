@@ -9,7 +9,7 @@ import (
 )
 
 func SendYandexEmail(cfg *config.Config, body string) error {
-	log.Printf("[INFO] [%s] Отправка сообщения от %s к %s\n",
+	log.Printf("[INFO] [%s] отправка сообщения от %s к %s\n",
 		time.Now().Format("15:04:05"), cfg.From, cfg.To)
 
 	auth := smtp.PlainAuth("", cfg.From, cfg.Password, cfg.SmtpHost)
@@ -24,12 +24,12 @@ func SendYandexEmail(cfg *config.Config, body string) error {
 	if err != nil {
 		return fmt.Errorf("ошибка отправки:  %w", err)
 	}
-	log.Println("[INFO] Письмо успешно отправлено!")
+	log.Println("[INFO] письмо успешно отправлено!")
 	return nil
 }
 
 func SendYandexEmailHTMLView(conf *config.Config, body string) error {
-	log.Printf("[INFO] Отправка сообщения c HTML")
+	log.Printf("[INFO] отправка сообщения c HTML")
 
 	auth := smtp.PlainAuth("", conf.From, conf.Password, conf.SmtpHost)
 
