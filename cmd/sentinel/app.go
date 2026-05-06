@@ -34,12 +34,14 @@ func (a *app) Run() error {
 			http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 				w.Header().Set("Content-Type", "text/html; charset=utf-8")
 				w.WriteHeader(http.StatusOK)
-				w.Write([]byte(htmlBody))
+
+				if _, err := w.Write([]byte(htmlBody)); err != nil {
+					log.Printf("write response: %v", err)
+				}
 			})
 
 			log.Println("Server started on :8080")
-			http.ListenAndServe(":8080", nil)
-			return nil
+			return http.ListenAndServe(":8080", nil)
 		}
 
 		// отправка письма на почту в виде html

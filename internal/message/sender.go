@@ -22,7 +22,7 @@ func SendYandexEmail(cfg *config.Config, body string) error {
 
 	err := smtp.SendMail(cfg.SmtpHost+":"+cfg.SmtpPort, auth, cfg.From, []string{cfg.To}, message)
 	if err != nil {
-		return fmt.Errorf("Ошибка отправки:  %w", err)
+		return fmt.Errorf("ошибка отправки:  %w", err)
 	}
 	log.Println("[INFO] Письмо успешно отправлено!")
 	return nil
@@ -43,7 +43,7 @@ func SendYandexEmailHTMLView(conf *config.Config, body string) error {
 
 	err := smtp.SendMail(conf.SmtpHost+":"+conf.SmtpPort, auth, conf.From, []string{conf.To}, message)
 	if err != nil {
-		return fmt.Errorf("Ошибка отправки:  %w", err)
+		return fmt.Errorf("ошибка отправки:  %w", err)
 	}
 
 	return nil

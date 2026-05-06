@@ -75,8 +75,6 @@ func (c *Config) validate() error {
 	default:
 		return fmt.Errorf("invalid MODE: %s", c.Mode)
 	}
-
-	return nil
 }
 
 func searchAndLoadEnvFile() (*Config, error) {

@@ -15,11 +15,12 @@ func main() {
 	file := ".env"
 	// генерация ключа
 	key := make([]byte, 32)
-	io.ReadFull(rand.Reader, key)
+	if _, err := io.ReadFull(rand.Reader, key); err != nil {
+		log.Fatal("[ERROR] Ошибка сохранения в ./build/.env.key: %w\n", err)
+	}
 	keyB64 := base64.StdEncoding.EncodeToString(key)
 	if err := os.WriteFile("./build/.env.key", []byte(keyB64), 0600); err != nil {
-		log.Printf("[ERROR] Ошибка сохранения в ./build/.env.key: %v\n", err)
-		os.Exit(1)
+		log.Fatal("[ERROR] Ошибка сохранения в ./build/.env.key: %w\n", err)
 	}
 
 	dataEnv, err := os.ReadFile(file)
