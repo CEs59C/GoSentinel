@@ -9,9 +9,9 @@ func main() {
 	log.SetPrefix("[sentinel] ")
 	log.SetFlags(log.LstdFlags | log.Lshortfile)
 
-	cfg, err := config.Load()
+	cfg, err := config.LoadConfig()
 	if err != nil {
-		log.Fatal("[ERROR] проблемы при парсинге файлов:", err)
+		log.Fatal("[ERROR] проблемы при парсинге файлов: ", err)
 	}
 
 	app := New(cfg)

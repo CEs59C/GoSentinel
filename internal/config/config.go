@@ -1,15 +1,20 @@
 package config
 
 import (
-	"crypto/aes"
-	"crypto/cipher"
-	"encoding/base64"
 	"fmt"
 	"log"
 	"os"
-	"strings"
 
 	"github.com/joho/godotenv"
+)
+
+type Mode string
+
+const (
+	ModeConsole   Mode = "console"
+	ModeEmailText Mode = "email-text"
+	ModeEmailHTML Mode = "email-html"
+	ModeTest      Mode = "test"
 )
 
 type Config struct {
@@ -22,46 +27,82 @@ type Config struct {
 	SmtpHost          string
 	SmtpPort          string
 }
-type Mode string
 
-const (
-	ModeConsole   Mode = "console"
-	ModeEmailText Mode = "email-text"
-	ModeEmailHTML Mode = "email-html"
-	ModeTest      Mode = "test"
-)
+type envFileInfo struct {
+	path        string
+	isEncrypted bool
+}
 
-func Load() (*Config, error) {
-	cfg, err := searchAndLoadEnvFile()
+func LoadConfig() (*Config, error) {
+	log.Println("[INFO] начата работа слоя Config")
+
+	envPath, err := findEnvFile()
 	if err != nil {
-		return cfg, fmt.Errorf("не удалось загрузить .env: %w", err)
+		return nil, err
 	}
 
-	cfg.From = os.Getenv("POST_IN")
-	cfg.To = os.Getenv("POST_TO")
-	cfg.Password = os.Getenv("PASSWORD")
-	cfg.Mode = Mode(os.Getenv("MODE"))
-	cfg.SmtpHost = os.Getenv("SMTP_HOST")
-	cfg.SmtpPort = os.Getenv("SMTP_PORT")
-
-	err = cfg.validate()
+	cfg1, err := buildConfig(envPath)
 	if err != nil {
-		return nil, fmt.Errorf("[ERROR] отсутствуют обязательные данные в .ENV: %w", err)
+		return nil, err
 	}
 
-	switch cfg.EncryptedPassword {
-	case true:
-		cfg.Password, err = decryptPassword(cfg.Password)
-		if err != nil {
-			return &Config{}, fmt.Errorf("не удалось расшифровать пароль: %w", err)
+	err = cfg1.validate()
+	if err != nil {
+		return nil, err
+	}
+
+	cfg2, err := Decrypt(*cfg1)
+	if err != nil {
+		return nil, err
+	}
+
+	return &cfg2, err
+}
+
+func findEnvFile() (envFileInfo, error) {
+	log.Println("[INFO] поиск .env файла")
+
+	home, err := os.UserHomeDir()
+	if err != nil {
+		log.Println("[ERROR] домашняя директория не определена")
+		home = ""
+	}
+
+	paths := []struct {
+		path        string
+		isEncrypted bool
+	}{
+		{"build/.env.encrypted", true},          // зашифрованный вариант
+		{".env.encrypted", true},                // зашифрованный вариант
+		{"build/.env", false},                   // текущая директория
+		{".env", false},                         // текущая директория
+		{"/etc/sentinel/.env", false},           // системная директория
+		{home + "/config/sentinel/.env", false}, // для линукса
+	}
+
+	pathsEnv := envFileInfo{}
+
+	for _, p := range paths {
+		if _, err := os.Stat(p.path); err == nil {
+			if p.isEncrypted {
+				log.Println("[INFO] найден шифрованный файл: ", p.path)
+				pathsEnv.path = p.path
+				pathsEnv.isEncrypted = true
+				break
+			} else {
+				log.Println("[INFO] найден нешифрованный файл:", p.path)
+				pathsEnv.path = p.path
+				pathsEnv.isEncrypted = false
+				break
+			}
 		}
-	case false:
-		log.Println("[INFO] использован не шифрованный пароль")
-	default:
-		log.Println("[CONFIG] Использование простого пароля (no encryption)")
 	}
 
-	return cfg, nil
+	if pathsEnv.path == "" {
+		return envFileInfo{}, fmt.Errorf("файл не найден")
+	}
+
+	return pathsEnv, nil
 }
 
 func (c *Config) validate() error {
@@ -72,112 +113,28 @@ func (c *Config) validate() error {
 	switch c.Mode {
 	case ModeConsole, ModeEmailText, ModeEmailHTML, ModeTest:
 		return nil
+	case "":
+		return fmt.Errorf("MODE не задан")
 	default:
-		return fmt.Errorf("invalid MODE: %s", c.Mode)
+		return fmt.Errorf("неизвестный MODE: %s", c.Mode)
 	}
 }
 
-func searchAndLoadEnvFile() (*Config, error) {
-	log.Println("[INFO] начат поиск файла .env")
-	cfg := &Config{}
-
-	home, err := os.UserHomeDir()
-	if err != nil {
-		log.Println("[ERROR] домашняя директория не определена")
-		return nil, fmt.Errorf("домашняя директория не определена %w", err)
+func buildConfig(envPath envFileInfo) (*Config, error) {
+	if err := godotenv.Load(envPath.path); err != nil {
+		return nil, fmt.Errorf("загрузка %s: %w", envPath.path, err)
 	}
 
-	paths := []struct {
-		path        string
-		isEncrypted bool
-	}{
-		{"build/.env.encrypted", true},          // зашифрованный вариант
-		{".env.encrypted", true},                // зашифрованный вариант
-		{".env", false},                         // текущая директория
-		{"/etc/sentinel/.env", false},           // системная директория
-		{home + "/config/sentinel/.env", false}, // для линукса
-	}
-
-	for _, p := range paths {
-		if err := godotenv.Load(p.path); err == nil {
-
-			if p.isEncrypted {
-				log.Println("[INFO] найден шифрованный файл: ", p.path)
-				cfg.EncryptedPassword = true
-				cfg.PathEnv = p.path
-				break
-			} else {
-				log.Println("[INFO] найден нешифрованный файл:", p.path)
-				cfg.EncryptedPassword = false
-				cfg.PathEnv = p.path
-				break
-			}
-		}
-	}
-
-	if cfg.PathEnv == "" {
-		return nil, fmt.Errorf(".env файл не найден")
+	cfg := &Config{
+		PathEnv:           envPath.path,
+		EncryptedPassword: envPath.isEncrypted,
+		From:              os.Getenv("POST_IN"),
+		To:                os.Getenv("POST_TO"),
+		Password:          os.Getenv("PASSWORD"),
+		Mode:              Mode(os.Getenv("MODE")),
+		SmtpHost:          os.Getenv("SMTP_HOST"),
+		SmtpPort:          os.Getenv("SMTP_PORT"),
 	}
 
 	return cfg, nil
-}
-
-func decryptPassword(encrypted string) (string, error) {
-	log.Println("[INFO] начата расшифровка шифрованного пароля")
-
-	if !strings.HasPrefix(encrypted, "ENC:") {
-		return "", fmt.Errorf("invalid encrypted format")
-	}
-	encrypted = strings.TrimPrefix(encrypted, "ENC:")
-
-	keyB64 := os.Getenv("ENCRYPTION_KEY")
-	if keyB64 == "" {
-		const template = `
-			============================================================
-			ДЛЯ ЗАПУСКА:
-			   export ENCRYPTION_KEY='Ключ расшифровки'
-			============================================================
-			`
-		log.Println("[WARNING] ключ расшифровки пароля не найден в переменных окружения")
-		log.Println(template)
-		return "", fmt.Errorf("ENCRYPTION_KEY не установлен")
-	} else {
-		log.Println("[INFO] ключ найден")
-	}
-
-	// Декодируем ключ
-	key, err := base64.StdEncoding.DecodeString(keyB64)
-	if err != nil {
-		return "", fmt.Errorf("неверный формат ключа: %w", err)
-	}
-
-	// Декодируем зашифрованные данные
-	ciphertext, err := base64.StdEncoding.DecodeString(encrypted)
-	if err != nil {
-		return "", fmt.Errorf("неверный формат зашифрованных данных: %w", err)
-	}
-
-	// Расшифровываем
-	block, err := aes.NewCipher(key)
-	if err != nil {
-		return "", fmt.Errorf("ошибка создания шифра: %w", err)
-	}
-
-	gcm, err := cipher.NewGCM(block)
-	if err != nil {
-		return "", fmt.Errorf("ошибка создания GCM: %w", err)
-	}
-
-	nonceSize := gcm.NonceSize()
-	if len(ciphertext) < nonceSize {
-		return "", fmt.Errorf("данные повреждены (слишком короткие)")
-	}
-
-	nonce, ciphertext := ciphertext[:nonceSize], ciphertext[nonceSize:]
-	plaintext, err := gcm.Open(nil, nonce, ciphertext, nil)
-	if err != nil {
-		return "", fmt.Errorf("расшифровка не удалась (возможно неверный ключ): %w", err)
-	}
-
-	return string(plaintext), nil
 }

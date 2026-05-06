@@ -8,13 +8,13 @@ ENV_FILE = .env.encrypted
 KEY_FILE := .env.key
 ENCRYPTION_KEY := $(shell cat $(BUILD_DIR)/$(KEY_FILE) 2>/dev/null)
 
-#GOOS ?= linux
-#GOARCH ?= amd64
-#HOST ?= remote
+GOOS ?= linux
+GOARCH ?= amd64
+HOST ?= remote
 
-GOOS ?= darwin
-GOARCH ?= arm64
-HOST ?= local
+#GOOS ?= darwin
+#GOARCH ?= arm64
+#HOST ?= local
 
 #GOOS ?= linux
 #GOARCH ?= arm64
@@ -93,4 +93,4 @@ install:
 lint:
 	@golangci-lint run ./... -v
 lint_autofix:
-	@G0111MODULE=on $(GOLINT) run ./... -v --fix
+	@GO111MODULE=on $(GOLINT) run ./... -v --fix
