@@ -6,6 +6,9 @@ import (
 )
 
 func main() {
+	log.SetPrefix("[sentinel] ")
+	log.SetFlags(log.LstdFlags | log.Lshortfile)
+
 	cfg, err := config.Load()
 	if err != nil {
 		log.Fatal("[ERROR] проблемы при парсинге файлов:", err)
