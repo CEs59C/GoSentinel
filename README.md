@@ -1,15 +1,3 @@
-закинуть на сервер бинарь
-
-ssh root@85.155.101.203
-
-scp /Users/onnikorpella/GolandProjects/goSentinel/build/sentinel-linux-amd64 root@85.155.101.203:/root/
-scp /Users/onnikorpella/GolandProjects/goSentinel/templates/report.html root@85.155.101.203:/root/templates/
-export ENCRYPTION_KEY="q7pfk0Zz9ugeRYh0VgjU44T8tEB3Ac6NRJ3jQL1DF84="
-cron -e
-journalctl -u cron | tail -n 20
-
-/root/santinel
-/root/sentinel/sentinel-linux-amd64
 # Sentinel
 
 **Sentinel** — это лёгкий CLI-сервис на Go для сбора системных метрик и отправки отчёта (в консоль или по email).
